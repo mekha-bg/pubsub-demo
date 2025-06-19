@@ -1,36 +1,33 @@
 import { useState } from 'react';
 import { pubsub } from '../utils/pubsub';
 
-export function MessagePublisher() {
-  const [input, setInput] = useState('');
+export default function MessagePublisher() {
+  const [message, setMessage] = useState('');
+  const topic = 'demo/pubsub';
 
   const handlePublish = async () => {
-    if (!input.trim()) return;
-
+    if (!message.trim()) return;
     try {
-      await pubsub.publish({
-        topics: ['messages'], 
-        message: { msg: input },
-      });
-      console.log('Message published:', input);
-      setInput('');
-    } catch (error) {
-      console.error('Publish error:', error);
-    }
+    await pubsub.publish({ 
+      topics: [topic], 
+      message: { msg: message }, 
+    });
+    setMessage('');
+  }  catch (error) {
+    console.error('Publish error:', error)
+  }
   };
 
   return (
-    <div style={{ marginTop: 20 }}>
-      <h3>Send Message</h3>
+    <div>
+      <h2>Publisher</h2>
       <input
         type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Enter message..."
+        value={message}
+        placeholder="Enter message"
+        onChange={(e) => setMessage(e.target.value)}
       />
-      <button onClick={handlePublish} style={{ marginLeft: 10 }}>
-        Publish
-      </button>
+      <button onClick={handlePublish}>Publish</button>
     </div>
   );
 }

@@ -1,50 +1,32 @@
 import { useEffect, useState } from 'react';
 import { pubsub } from '../utils/pubsub';
-import { Hub } from 'aws-amplify/utils';
-import { CONNECTION_STATE_CHANGE, ConnectionState } from '@aws-amplify/pubsub';
 
-export function MessageSubscriber() {
-  const [message, setMessage] = useState<string>('');
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionState | string>('Connecting');
-  const [subscription, setSubscription] = useState<any>(null);
+export default function MessageSubscriber() {
+  const topic = 'demo/pubsub';
+  const [messages, setMessages] = useState<string[]>([]);
 
   useEffect(() => {
-    const sub = pubsub.subscribe({ topics: ['messages'] }).subscribe({
-      next: (data) => {
-        console.log('Message received:', data);
-        setMessage(JSON.stringify(data));
+    const subscription = pubsub.subscribe({ topics: [topic] }).subscribe({
+      next: (data: Record<string, any>) => {
+         if (data?.msg) {
+           setMessages((prev) => [...prev, data.msg]);
+          }
       },
-      error: (error) => {
-        console.error('Subscription error:', error);
-      },
-      complete: () => {
-        console.log('Subscription complete');
-      },
+      error: (err: any) => console.error('Error:', err),
+      complete: () => console.log('Done'),
     });
 
-    setSubscription(sub);
-
-    const listener = Hub.listen('pubsub', (data: any) => {
-      const { payload } = data;
-      if (payload.event === CONNECTION_STATE_CHANGE) {
-        const connectionState = payload.data.connectionState as ConnectionState;
-        console.log('Connection state:', connectionState);
-        setConnectionStatus(connectionState);
-      }
-    });
-
-    return () => {
-      sub.unsubscribe();
-      listener();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
     <div>
-      <h2>Connection Status: {connectionStatus}</h2>
-      <h3>Latest Message</h3>
-      <pre>{message}</pre>
-      <button onClick={() => subscription?.unsubscribe()}>Unsubscribe</button>
+      <h2>Subscriber</h2>
+      <ul>
+        {messages.map((msg, idx) => (
+          <li key={idx}>{msg}</li>
+        ))}
+      </ul>
     </div>
   );
 }

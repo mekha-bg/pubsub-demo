@@ -24,8 +24,8 @@ dist-ssr
 *.sw?
 
 #src
-src/utils/pubsub.ts
-src/aws-config.ts
+#src/utils/pubsub.ts
+#src/aws-config.ts
 
 #amplify-do-not-edit-begin
 amplify/\#current-cloud-backend
