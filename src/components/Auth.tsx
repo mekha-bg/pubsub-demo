@@ -10,6 +10,8 @@ interface Props {
   onSuccess: (email: string, identityId: string) => void;
 }
 
+import { IoTClient, AttachPolicyCommand } from "@aws-sdk/client-iot"; // ES Modules import
+
 export default function Auth({ onSuccess }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,11 +47,32 @@ export default function Auth({ onSuccess }: Props) {
       await signIn({ username: email, password });
       const session = await fetchAuthSession();
       const identityId = session.identityId ?? "";
+      const policyName = "PubSubPolicy";
+      const credentials = session.credentials;
+      attachPolicy(identityId, policyName, credentials);
       onSuccess(email, identityId);
     } catch (err) {
       console.error("Sign in error:", err);
     }
   };
+
+  async function attachPolicy(id: string, policyName: string, credentials) {
+    console.log("Attach IoT Policy: " + policyName + " with cognito identity id: " + id);
+    const client = new IoTClient({region: 'ap-southeast-1', credentials: credentials}); // IoTClient(iot_config)
+
+    const input = { // AttachPolicyRequest
+      policyName: policyName, // required
+      target: id, // required
+    };
+    try {
+      const command = new AttachPolicyCommand(input);
+      const response = await client.send(command);
+      console.log(response);
+    }
+    catch (err) {
+      console.log(err);
+    }
+  }
 
   return (
     <div style={{ padding: "1rem" }}>
@@ -57,8 +80,8 @@ export default function Auth({ onSuccess }: Props) {
         {authStep === "signup"
           ? "Create Account"
           : authStep === "confirm"
-          ? "Confirm Sign Up"
-          : "Login"}
+            ? "Confirm Sign Up"
+            : "Login"}
       </h2>
 
       <input
